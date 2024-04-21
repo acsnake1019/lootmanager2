@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Button Grid</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: row;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #fffbeb; /* Light yellow background */
+        }
+        .main-content {
+            flex: 3;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar {
+            flex: 1;
+            padding: 20px;
+            background-color: #ffffd1; /* Very light yellow */
+            color: #333; /* Dark text for contrast */
+            border-left: 3px solid #ffd700; /* Gold border */
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            overflow: auto; /* Ensures content is scrollable on small screens */
+        }
+        .button-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Responsive grid */
+            grid-gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+        .name {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            cursor: pointer;
+            background: #ffff99; /* Light yellow */
+            border-radius: 8px;
+            border: 1px solid #ffd700; /* Gold border */
+            color: #333;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .name:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.5); /* Yellow glow */
+        }
+        .status-tips {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+        button {
+            background-color: #ffd700; /* Gold color */
+            color: #20232a; /* Dark text for readability */
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            border: none;
+            margin: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            background-color: #f0c040; /* Lighter gold on hover */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                order: 1;
+                width: 100%;
+                border-left: none;
+                border-top: 3px solid #ffd700;
+            }
+            .main-content {
+                order: 2;
+            }
+            .button-container {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Smaller buttons on smaller screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div class="header">
+            <button id="addButton">+</button>
+            <button id="saveButton">Save</button>
+            <button id="loadButton">Load</button>
+            <button id="nextButton">Next</button>
+            <button id="copyButton">Copy Output</button>
+        </div>
+        <div class="button-container">
+            <!-- Buttons will be dynamically added here -->
+        </div>
+        <div class="footer">
+            <div id="output" style="margin-top: 20px; font-size: 14px;">Output will appear here...</div>
+        </div>
+    </div>
+    <div class="sidebar">
+        <div class="status-tips">
+            <strong>"queue"</strong> - Waiting in line to collect equipment.<br>
+            <strong>"looted"</strong> - Already collected equipment and will be placed at the end of the line.<br>
+            <strong>"locked"</strong> - No longer in the area, position remains unchanged.<br>
+            <strong>"+"</strong> - Add a number in list.<br>
+            <strong>"Save"</strong> - Save data.<br>
+          <strong>"Load"</strong> - Load the previous record.<br>
+          <strong>"Next"</strong> -  Move those who have already obtained equipment (status: looted) to the end of the line.<br>
+          <strong>"Copy Ouput"</strong> - Copy the output .<br>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.button-container');
+            document.getElementById('addButton').addEventListener('click', function() {
+                if (container.children.length < 24) {
+                    addNewButton(container.children.length + 1);
+                }
+            });
+
+            document.getElementById('saveButton').addEventListener('click', function() {
+                saveButtons();
+                alert('Buttons saved!');
+            });
+
+            document.getElementById('loadButton').addEventListener('click', function() {
+                loadButtons();
+                alert('Buttons loaded!');
+            });
+
+            document.getElementById('nextButton').addEventListener('click', function() {
+                rollButtons();
+            });
+
+            document.getElementById('copyButton').addEventListener('click', function() {
+                const outputText = document.getElementById('output').textContent;
+                navigator.clipboard.writeText(outputText).then(() => {
+                    alert('Output copied to clipboard!');
+                }, (err) => {
+                    alert('Error in copying text: ', err);
+                });
+            });
+
+            function addNewButton(number) {
+                const button = document.createElement('div');
+                button.className = 'name';
+                button.innerHTML = `<div class="number">#${number}</div><div class="name">Button ${number}</div><div class="status">queue</div>`;
+                setupButtonInteractions(button);
+                container.appendChild(button);
+            }
+
+            function setupButtonInteractions(button) {
+                button.addEventListener('contextmenu', function(event) {
+                    event.preventDefault();
+                    const nameElement = this.querySelector('.name');
+                    nameElement.setAttribute('contenteditable', 'true');
+                    nameElement.focus();
+                    return false;
+                });
+
+                button.addEventListener('blur', function(event) {
+                    const nameElement = this.querySelector('.name');
+                    nameElement.setAttribute('contenteditable', 'false');
+                }, true);
+
+                button.addEventListener('click', function(event) {
+                    const statusElement = this.querySelector('.status');
+                    switch (statusElement.textContent) {
+                        case 'queue':
+                            statusElement.textContent = 'looted';
+                            break;
+                        case 'looted':
+                            statusElement.textContent = 'queue';
+                            break;
+                        case 'locked':
+                            // Locked status does not toggle through clicks
+                            break;
+                    }
+                });
+
+                button.addEventListener('dblclick', function(event) {
+                    event.preventDefault(); // Prevent default double click
+                    const statusElement = this.querySelector('.status');
+                    statusElement.textContent = statusElement.textContent === 'locked' ? 'queue' : 'locked';
+                });
+            }
+
+            function rollButtons() {
+                let allButtons = Array.from(container.children);
+                const lockedButtons = allButtons.filter(btn => btn.querySelector('.status').textContent === 'locked');
+                const queueButtons = allButtons.filter(btn => btn.querySelector('.status').textContent === 'queue');
+                const lootedButtons = allButtons.filter(btn => btn.querySelector('.status').textContent === 'looted');
+
+                // Move looted buttons to the end and change them back to 'queue'
+                lootedButtons.forEach(button => {
+                    button.querySelector('.status').textContent = 'queue';
+                });
+
+                let newOrder = [];
+                lockedButtons.forEach(lockedButton => {
+                    const index = allButtons.indexOf(lockedButton);
+                    newOrder[index] = lockedButton;
+                });
+                let freeIndex = 0;
+                for (let i = 0; i < allButtons.length; i++) {
+                    if (!newOrder[i]) {
+                        if (queueButtons[freeIndex]) {
+                            newOrder[i] = queueButtons[freeIndex++];
+                        } else if (lootedButtons[0]) {
+                            newOrder[i] = lootedButtons.shift();
+                        }
+                    }
+                }
+                newOrder.forEach(btn => container.appendChild(btn));
+                saveButtons();
+                updateOutput();
+            }
+
+            function saveButtons() {
+                const buttonsData = Array.from(container.children).map(btn => ({
+                    number: btn.querySelector('.number').textContent,
+                    name: btn.querySelector('.name').textContent,
+                    status: btn.querySelector('.status').textContent
+                }));
+                localStorage.setItem('buttonsData', JSON.stringify(buttonsData));
+            }
+
+            function loadButtons() {
+                const buttonsData = JSON.parse(localStorage.getItem('buttonsData'));
+                if (buttonsData) {
+                    container.innerHTML = ''; // Clear existing buttons
+                    buttonsData.forEach(data => {
+                        addNewButton(data.number.replace('#', ''), data.name, data.status);
+                    });
+                }
+            }
+
+            function updateOutput() {
+                const output = document.getElementById('output');
+                const buttonsData = Array.from(container.children).map(btn => `${btn.querySelector('.number').textContent}: ${btn.querySelector('.name').textContent}`);
+                output.textContent = '/rs : ' + buttonsData.join(', ');
+            }
+        });
+    </script>
+</body>
+</html>
