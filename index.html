@@ -98,6 +98,7 @@
             <button id="addButton">+</button>
             <button id="saveButton">Save</button>
             <button id="loadButton">Load</button>
+            <input type="file" id="fileInput" style="display:none;">
             <button id="nextButton">Next</button>
             <button id="copyButton">Copy Output</button>
         </header>
@@ -128,6 +129,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const container = document.querySelector('.button-container');
             const historyList = document.querySelector('#history ul');
+            const fileInput = document.getElementById('fileInput');
 
             document.getElementById('addButton').addEventListener('click', () => {
                 if (container.children.length < 24) {
@@ -138,13 +140,24 @@
             document.getElementById('saveButton').addEventListener('click', () => {
                 saveButtons();
                 saveHistory();
-                alert('Buttons and history saved!');
+                downloadJSON();
             });
 
             document.getElementById('loadButton').addEventListener('click', () => {
-                loadButtons();
-                loadHistory();
-                alert('Buttons and history loaded!');
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const data = JSON.parse(e.target.result);
+                        loadFromJSON(data);
+                        alert('Buttons and history loaded!');
+                    };
+                    reader.readAsText(file);
+                }
             });
 
             document.getElementById('nextButton').addEventListener('click', () => {
@@ -292,6 +305,35 @@
                         historyItem.textContent = record;
                         historyList.appendChild(historyItem);
                     });
+                }
+            }
+
+            function downloadJSON() {
+                const buttonsData = JSON.parse(localStorage.getItem('buttonsData'));
+                const historyData = JSON.parse(localStorage.getItem('historyData'));
+                const data = {
+                    buttons: buttonsData,
+                    history: historyData
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'data.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            function loadFromJSON(data) {
+                if (data.buttons) {
+                    localStorage.setItem('buttonsData', JSON.stringify(data.buttons));
+                    loadButtons();
+                }
+                if (data.history) {
+                    localStorage.setItem('historyData', JSON.stringify(data.history));
+                    loadHistory();
                 }
             }
         });
