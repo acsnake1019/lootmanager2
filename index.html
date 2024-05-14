@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Button Grid</title>
+    <title>動態按鈕網格</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body, html {
             height: 100%;
@@ -11,7 +12,7 @@
             display: flex;
             flex-direction: row;
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background-color: #fffbeb; /* Light yellow background */
+            background-color: #fffbeb;
         }
         .main-content {
             flex: 3;
@@ -24,35 +25,33 @@
         .sidebar {
             flex: 1;
             padding: 20px;
-            background-color: #ffffd1; /* Very light yellow */
-            color: #333; /* Dark text for contrast */
-            border-left: 3px solid #ffd700; /* Gold border */
-            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-            overflow: auto; /* Ensures content is scrollable on small screens */
+            background-color: #ffffd1;
+            color: #333;
+            border-left: 3px solid #ffd700;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            overflow: auto;
         }
         .button-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Responsive grid */
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             grid-gap: 10px;
             width: 100%;
-            justify-content: center;
         }
         .name {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             align-items: center;
             padding: 10px;
             cursor: pointer;
-            background: #ffff99; /* Light yellow */
+            background: #ffff99;
             border-radius: 8px;
-            border: 1px solid #ffd700; /* Gold border */
+            border: 1px solid #ffd700;
             color: #333;
             transition: transform 0.2s, box-shadow 0.2s;
         }
         .name:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.5); /* Yellow glow */
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.5);
         }
         .status-tips {
             font-size: 14px;
@@ -60,8 +59,8 @@
             margin-top: 10px;
         }
         button {
-            background-color: #ffd700; /* Gold color */
-            color: #20232a; /* Dark text for readability */
+            background-color: #ffd700;
+            color: #20232a;
             padding: 10px 20px;
             border-radius: 5px;
             font-size: 16px;
@@ -71,7 +70,7 @@
             transition: background-color 0.2s, box-shadow 0.2s;
         }
         button:hover {
-            background-color: #f0c040; /* Lighter gold on hover */
+            background-color: #f0c040;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         @media (max-width: 768px) {
@@ -88,95 +87,103 @@
                 order: 2;
             }
             .button-container {
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Smaller buttons on smaller screens */
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
             }
         }
     </style>
 </head>
 <body>
     <div class="main-content">
-        <div class="header">
+        <header class="mb-3">
             <button id="addButton">+</button>
             <button id="saveButton">Save</button>
             <button id="loadButton">Load</button>
             <button id="nextButton">Next</button>
             <button id="copyButton">Copy Output</button>
-        </div>
-        <div class="button-container">
-            <!-- Buttons will be dynamically added here -->
-        </div>
-        <div class="footer">
-            <div id="output" style="margin-top: 20px; font-size: 14px;">Output will appear here...</div>
+        </header>
+        <div class="button-container"></div>
+        <footer class="mt-3">
+            <div id="output">Output will appear here...</div>
+        </footer>
+        <div id="history" class="mt-3">
+            <h3>歷史紀錄</h3>
+            <ul class="list-group">
+                <!-- 歷史紀錄會顯示在這裡 -->
+            </ul>
         </div>
     </div>
-    <div class="sidebar">
+    <aside class="sidebar">
         <div class="status-tips">
             <strong>"queue"</strong> - Waiting in line to collect equipment.<br>
             <strong>"looted"</strong> - Already collected equipment and will be placed at the end of the line.<br>
             <strong>"locked"</strong> - No longer in the area, position remains unchanged.<br>
             <strong>"+"</strong> - Add a number in list.<br>
             <strong>"Save"</strong> - Save data.<br>
-          <strong>"Load"</strong> - Load the previous record.<br>
-          <strong>"Next"</strong> -  Move those who have already obtained equipment (status: looted) to the end of the line.<br>
-          <strong>"Copy Ouput"</strong> - Copy the output .<br>
+            <strong>"Load"</strong> - Load the previous record.<br>
+            <strong>"Next"</strong> - Move those who have already obtained equipment (status: looted) to the end of the line.<br>
+            <strong>"Copy Output"</strong> - Copy the output.<br>
         </div>
-    </div>
+    </aside>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', () => {
             const container = document.querySelector('.button-container');
-            document.getElementById('addButton').addEventListener('click', function() {
+            const historyList = document.querySelector('#history ul');
+
+            document.getElementById('addButton').addEventListener('click', () => {
                 if (container.children.length < 24) {
                     addNewButton(container.children.length + 1);
                 }
             });
 
-            document.getElementById('saveButton').addEventListener('click', function() {
+            document.getElementById('saveButton').addEventListener('click', () => {
                 saveButtons();
-                alert('Buttons saved!');
+                saveHistory();
+                alert('Buttons and history saved!');
             });
 
-            document.getElementById('loadButton').addEventListener('click', function() {
+            document.getElementById('loadButton').addEventListener('click', () => {
                 loadButtons();
-                alert('Buttons loaded!');
+                loadHistory();
+                alert('Buttons and history loaded!');
             });
 
-            document.getElementById('nextButton').addEventListener('click', function() {
+            document.getElementById('nextButton').addEventListener('click', () => {
                 rollButtons();
+                recordHistory();
             });
 
-            document.getElementById('copyButton').addEventListener('click', function() {
+            document.getElementById('copyButton').addEventListener('click', () => {
                 const outputText = document.getElementById('output').textContent;
                 navigator.clipboard.writeText(outputText).then(() => {
                     alert('Output copied to clipboard!');
-                }, (err) => {
-                    alert('Error in copying text: ', err);
+                }).catch(err => {
+                    alert('Error in copying text: ' + err);
                 });
             });
 
             function addNewButton(number) {
                 const button = document.createElement('div');
                 button.className = 'name';
-                button.innerHTML = `<div class="number">#${number}</div><div class="name">Button ${number}</div><div class="status">queue</div>`;
+                button.innerHTML = `<div class="number">#${number}</div><div class="button-name">Button ${number}</div><div class="status">queue</div>`;
                 setupButtonInteractions(button);
                 container.appendChild(button);
             }
 
             function setupButtonInteractions(button) {
-                button.addEventListener('contextmenu', function(event) {
+                button.addEventListener('contextmenu', event => {
                     event.preventDefault();
-                    const nameElement = this.querySelector('.name');
+                    const nameElement = button.querySelector('.button-name');
                     nameElement.setAttribute('contenteditable', 'true');
                     nameElement.focus();
-                    return false;
                 });
 
-                button.addEventListener('blur', function(event) {
-                    const nameElement = this.querySelector('.name');
+                button.addEventListener('blur', event => {
+                    const nameElement = button.querySelector('.button-name');
                     nameElement.setAttribute('contenteditable', 'false');
                 }, true);
 
-                button.addEventListener('click', function(event) {
-                    const statusElement = this.querySelector('.status');
+                button.addEventListener('click', () => {
+                    const statusElement = button.querySelector('.status');
                     switch (statusElement.textContent) {
                         case 'queue':
                             statusElement.textContent = 'looted';
@@ -185,34 +192,31 @@
                             statusElement.textContent = 'queue';
                             break;
                         case 'locked':
-                            // Locked status does not toggle through clicks
                             break;
                     }
                 });
 
-                button.addEventListener('dblclick', function(event) {
-                    event.preventDefault(); // Prevent default double click
-                    const statusElement = this.querySelector('.status');
+                button.addEventListener('dblclick', event => {
+                    event.preventDefault();
+                    const statusElement = button.querySelector('.status');
                     statusElement.textContent = statusElement.textContent === 'locked' ? 'queue' : 'locked';
                 });
             }
 
             function rollButtons() {
-                let allButtons = Array.from(container.children);
+                const allButtons = Array.from(container.children);
                 const lockedButtons = allButtons.filter(btn => btn.querySelector('.status').textContent === 'locked');
                 const queueButtons = allButtons.filter(btn => btn.querySelector('.status').textContent === 'queue');
                 const lootedButtons = allButtons.filter(btn => btn.querySelector('.status').textContent === 'looted');
 
-                // Move looted buttons to the end and change them back to 'queue'
-                lootedButtons.forEach(button => {
-                    button.querySelector('.status').textContent = 'queue';
-                });
+                lootedButtons.forEach(button => button.querySelector('.status').textContent = 'queue');
 
-                let newOrder = [];
+                const newOrder = [];
                 lockedButtons.forEach(lockedButton => {
                     const index = allButtons.indexOf(lockedButton);
                     newOrder[index] = lockedButton;
                 });
+
                 let freeIndex = 0;
                 for (let i = 0; i < allButtons.length; i++) {
                     if (!newOrder[i]) {
@@ -223,6 +227,7 @@
                         }
                     }
                 }
+
                 newOrder.forEach(btn => container.appendChild(btn));
                 saveButtons();
                 updateOutput();
@@ -231,7 +236,7 @@
             function saveButtons() {
                 const buttonsData = Array.from(container.children).map(btn => ({
                     number: btn.querySelector('.number').textContent,
-                    name: btn.querySelector('.name').textContent,
+                    name: btn.querySelector('.button-name').textContent,
                     status: btn.querySelector('.status').textContent
                 }));
                 localStorage.setItem('buttonsData', JSON.stringify(buttonsData));
@@ -240,17 +245,54 @@
             function loadButtons() {
                 const buttonsData = JSON.parse(localStorage.getItem('buttonsData'));
                 if (buttonsData) {
-                    container.innerHTML = ''; // Clear existing buttons
+                    container.innerHTML = '';
                     buttonsData.forEach(data => {
-                        addNewButton(data.number.replace('#', ''), data.name, data.status);
+                        const button = document.createElement('div');
+                        button.className = 'name';
+                        button.innerHTML = `<div class="number">${data.number}</div><div class="button-name">${data.name}</div><div class="status">${data.status}</div>`;
+                        setupButtonInteractions(button);
+                        container.appendChild(button);
                     });
                 }
             }
 
             function updateOutput() {
                 const output = document.getElementById('output');
-                const buttonsData = Array.from(container.children).map(btn => `${btn.querySelector('.number').textContent}: ${btn.querySelector('.name').textContent}`);
+                const buttonsData = Array.from(container.children).map(btn => `${btn.querySelector('.number').textContent}: ${btn.querySelector('.button-name').textContent}`);
                 output.textContent = '/rs : ' + buttonsData.join(', ');
+            }
+
+            function recordHistory() {
+                const outputText = document.getElementById('output').textContent;
+                const timestamp = new Date().toLocaleString('zh-Hant', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+
+                const historyItem = document.createElement('li');
+                historyItem.className = 'list-group-item';
+                historyItem.textContent = `${timestamp} - ${outputText}`;
+
+                historyList.appendChild(historyItem);
+                saveHistory();
+            }
+
+            function saveHistory() {
+                const historyData = Array.from(historyList.children).map(item => item.textContent);
+                localStorage.setItem('historyData', JSON.stringify(historyData));
+            }
+
+            function loadHistory() {
+                const historyData = JSON.parse(localStorage.getItem('historyData'));
+                if (historyData) {
+                    historyList.innerHTML = '';
+                    historyData.forEach(record => {
+                        const historyItem = document.createElement('li');
+                        historyItem.className = 'list-group-item';
+                        historyItem.textContent = record;
+                        historyList.appendChild(historyItem);
+                    });
+                }
             }
         });
     </script>
