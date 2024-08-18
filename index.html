@@ -77,6 +77,10 @@
             width: 100%;
             margin-bottom: 5px;
         }
+        .item-number {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
         #output, #history {
             background-color: #fff;
             padding: 10px;
@@ -114,9 +118,9 @@
 </head>
 <body>
     <div class="font-size-controls">
-        <button class="font-size-btn" onclick="changeFontSize('normal')">正常</button>
-        <button class="font-size-btn" onclick="changeFontSize('large')">大</button>
-        <button class="font-size-btn" onclick="changeFontSize('largest')">最大</button>
+        <button class="font-size-btn" onclick="changeFontSize('normal')" data-zh="正常" data-en="Normal">正常</button>
+        <button class="font-size-btn" onclick="changeFontSize('large')" data-zh="大" data-en="Large">大</button>
+        <button class="font-size-btn" onclick="changeFontSize('largest')" data-zh="最大" data-en="Largest">最大</button>
     </div>
     <div class="main-content">
         <div class="controls">
@@ -174,7 +178,10 @@
                 locked: "已鎖定",
                 copiedToClipboard: "輸出已複製到剪貼板！",
                 copyError: "複製文本時出錯: ",
-                instructions: "操作說明"
+                instructions: "操作說明",
+                normal: "正常",
+                large: "大",
+                largest: "最大"
             },
             en: {
                 addName: "Add name",
@@ -189,7 +196,10 @@
                 locked: "Locked",
                 copiedToClipboard: "Output copied to clipboard!",
                 copyError: "Error in copying text: ",
-                instructions: "Instructions"
+                instructions: "Instructions",
+                normal: "Normal",
+                large: "Large",
+                largest: "Largest"
             }
         };
 
@@ -230,6 +240,7 @@
                 const item = document.createElement('div');
                 item.className = 'grid-item queue';
                 item.innerHTML = `
+                    <div class="item-number">${itemCount + 1}</div>
                     <input type="text" placeholder="name" value="name ${itemCount + 1}">
                     <select onchange="updateItemStatus(this)">
                         <option value="queue">${translations[currentLang].queue}</option>
@@ -250,7 +261,14 @@
 
         function deleteGridItem(item) {
             gridContainer.removeChild(item);
+            updateItemNumbers();
             updateOutput();
+        }
+
+        function updateItemNumbers() {
+            Array.from(gridContainer.children).forEach((item, index) => {
+                item.querySelector('.item-number').textContent = index + 1;
+            });
         }
 
         function saveData() {
@@ -279,10 +297,11 @@
 
         function loadData(data) {
             gridContainer.innerHTML = '';
-            data.items.forEach(item => {
+            data.items.forEach((item, index) => {
                 const gridItem = document.createElement('div');
                 gridItem.className = `grid-item ${item.status}`;
                 gridItem.innerHTML = `
+                    <div class="item-number">${index + 1}</div>
                     <input type="text" value="${item.name}">
                     <select onchange="updateItemStatus(this)">
                         <option value="queue" ${item.status === 'queue' ? 'selected' : ''}>${translations[currentLang].queue}</option>
@@ -309,7 +328,8 @@
             });
             
             gridContainer.innerHTML = '';
-            [...locked, ...queue, ...looted].forEach(item => {
+            [...locked, ...queue, ...looted].forEach((item, index) => {
+                item.querySelector('.item-number').textContent = index + 1;
                 gridContainer.appendChild(item);
             });
             
@@ -320,12 +340,12 @@
         function updateOutput() {
             const output = document.getElementById('output');
             const items = Array.from(gridContainer.children);
-            output.textContent = '/rs : ' + items.map((item, index) => 
-                `${index + 1}: ${item.querySelector('input').value}`
+            output.textContent = '/rs : ' + items.map(item => 
+                `${item.querySelector('.item-number').textContent}: ${item.querySelector('input').value}`
             ).join(', ');
         }
 
-        function recordHistory() {
+       function recordHistory() {
             const li = document.createElement('li');
             li.textContent = new Date().toLocaleString() + ' - ' + document.getElementById('output').textContent;
             historyList.appendChild(li);
@@ -350,7 +370,7 @@
             URL.revokeObjectURL(url);
         }
 
-          document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', () => {
             gridContainer = document.getElementById('gridContainer');
             historyList = document.getElementById('historyList');
             fileInput = document.getElementById('fileInput');
