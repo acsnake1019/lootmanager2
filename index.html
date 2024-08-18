@@ -3,340 +3,323 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>動態按鈕網格</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <title>雙語網格管理器 - 帶顏色編碼和右側說明</title>
     <style>
-        body, html {
-            height: 100%;
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
             margin: 0;
+            padding: 20px;
+            background-color: #f0f4f8;
             display: flex;
-            flex-direction: row;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background-color: #fffbeb;
         }
         .main-content {
             flex: 3;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            padding-right: 20px;
         }
         .sidebar {
             flex: 1;
+            background-color: #e9ecef;
             padding: 20px;
-            background-color: #ffffd1;
-            color: #333;
-            border-left: 3px solid #ffd700;
-            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
-            overflow: auto;
-        }
-        .button-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            grid-gap: 10px;
-            width: 100%;
-        }
-        .name {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 10px;
-            cursor: pointer;
-            background: #ffff99;
-            border-radius: 8px;
-            border: 1px solid #ffd700;
-            color: #333;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .name:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.5);
-        }
-        .status-tips {
-            font-size: 14px;
-            line-height: 1.6;
-            margin-top: 10px;
+            border-radius: 5px;
         }
         button {
-            background-color: #ffd700;
-            color: #20232a;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
             border: none;
-            margin: 5px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.2s, box-shadow 0.2s;
+            margin: 5px;
         }
         button:hover {
-            background-color: #f0c040;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background-color: #45a049;
         }
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-            }
-            .sidebar {
-                order: 1;
-                width: 100%;
-                border-left: none;
-                border-top: 3px solid #ffd700;
-            }
-            .main-content {
-                order: 2;
-            }
-            .button-container {
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            }
+        input, select {
+            padding: 5px;
+            margin: 5px;
+        }
+        .grid-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .grid-item.queue {
+            background-color: #fffde7;
+        }
+        .grid-item.looted {
+            background-color: #e8f5e9;
+        }
+        .grid-item.locked {
+            background-color: #ffebee;
+        }
+        #output, #history {
+            background-color: #fff;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+        #historyList {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        #historyList li {
+            background-color: #f8f9fa;
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
     <div class="main-content">
-        <header class="mb-3">
-            <button id="addButton">+</button>
-            <button id="saveButton">Save</button>
-            <button id="loadButton">Load</button>
+        <div>
+            <button onclick="changeLanguage('zh')">中文</button>
+            <button onclick="changeLanguage('en')">English</button>
+        </div>
+        <div>
+            <button id="addButton" data-zh="添加名稱" data-en="Add name">添加名稱</button>
+            <button id="saveButton" data-zh="保存" data-en="Save">保存</button>
+            <button id="loadButton" data-zh="加載" data-en="Load">加載</button>
             <input type="file" id="fileInput" style="display:none;">
-            <button id="nextButton">Next</button>
-            <button id="copyButton">Copy Output</button>
-        </header>
-        <div class="button-container"></div>
-        <footer class="mt-3">
-            <div id="output">Output will appear here...</div>
-        </footer>
-        <div id="history" class="mt-3">
-            <h3>History</h3>
-            <ul class="list-group">
-                <!-- 歷史紀錄會顯示在這裡 -->
-            </ul>
+            <button id="nextButton" data-zh="下一步" data-en="Next">下一步</button>
+            <button id="copyButton" data-zh="複製輸出" data-en="Copy Output">複製輸出</button>
+        </div>
+        
+        <div id="gridContainer"></div>
+        
+        <div id="output" data-zh="輸出將顯示在這裡..." data-en="Output will be displayed here...">輸出將顯示在這裡...</div>
+        
+        <div id="history">
+            <h3 data-zh="歷史記錄" data-en="History">歷史記錄</h3>
+            <ul id="historyList"></ul>
         </div>
     </div>
-    <aside class="sidebar">
-        <div class="status-tips">
-            <strong>"queue"</strong> - Waiting in line to collect equipment.<br>
-            <strong>"looted"</strong> - Already collected equipment and will be placed at the end of the line.<br>
-            <strong>"locked"</strong> - No longer in the area, position remains unchanged.<br>
-            <strong>"+"</strong> - Add a number in list.<br>
-            <strong>"Save"</strong> - Save data.<br>
-            <strong>"Load"</strong> - Load the previous record.<br>
-            <strong>"Next"</strong> - Move those who have already obtained equipment (status: looted) to the end of the line.<br>
-            <strong>"Copy Output"</strong> - Copy the output.<br>
-        </div>
-    </aside>
+
+    <div class="sidebar">
+        <h3 data-zh="操作說明" data-en="Instructions">操作說明</h3>
+        <p data-zh="添加名稱：新增一個名稱到網格中。" data-en="Add name: Add a new name to the grid.">添加名稱：新增一個名稱到網格中。</p>
+        <p data-zh="保存：保存當前的數據。" data-en="Save: Save the current data.">保存：保存當前的數據。</p>
+        <p data-zh="加載：加載之前保存的數據。" data-en="Load: Load previously saved data.">加載：加載之前保存的數據。</p>
+        <p data-zh="下一步：將已領取的項目（狀態：已領取）移到隊列末尾。" data-en="Next: Move collected items (status: Collected) to the end of the queue.">下一步：將已領取的項目（狀態：已領取）移到隊列末尾。</p>
+        <p data-zh="複製輸出：複製當前的輸出文本。" data-en="Copy Output: Copy the current output text.">複製輸出：複製當前的輸出文本。</p>
+        <p data-zh="狀態說明：" data-en="Status Description:">狀態說明：</p>
+        <ul>
+            <li data-zh="等待中：等待領取裝備" data-en="Queue: Waiting to collect equipment">等待中：等待領取裝備</li>
+            <li data-zh="已領取：已領取裝備，將被移到隊列末尾" data-en="Collected: Equipment collected, will be moved to the end of the queue">已領取：已領取裝備，將被移到隊列末尾</li>
+            <li data-zh="已鎖定：不再在區域內，位置保持不變" data-en="Locked: No longer in the area, position remains unchanged">已鎖定：不再在區域內，位置保持不變</li>
+        </ul>
+    </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const container = document.querySelector('.button-container');
-            const historyList = document.querySelector('#history ul');
-            const fileInput = document.getElementById('fileInput');
-
-            document.getElementById('addButton').addEventListener('click', () => {
-                if (container.children.length < 24) {
-                    addNewButton(container.children.length + 1);
-                }
-            });
-
-            document.getElementById('saveButton').addEventListener('click', () => {
-                saveButtons();
-                saveHistory();
-                downloadJSON();
-            });
-
-            document.getElementById('loadButton').addEventListener('click', () => {
-                fileInput.click();
-            });
-
-            fileInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const data = JSON.parse(e.target.result);
-                        loadFromJSON(data);
-                        alert('Buttons and history loaded!');
-                    };
-                    reader.readAsText(file);
-                }
-            });
-
-            document.getElementById('nextButton').addEventListener('click', () => {
-                rollButtons();
-                recordHistory();
-            });
-
-            document.getElementById('copyButton').addEventListener('click', () => {
-                const outputText = document.getElementById('output').textContent;
-                navigator.clipboard.writeText(outputText).then(() => {
-                    alert('Output copied to clipboard!');
-                }).catch(err => {
-                    alert('Error in copying text: ' + err);
-                });
-            });
-
-            function addNewButton(number) {
-                const button = document.createElement('div');
-                button.className = 'name';
-                button.innerHTML = `<div class="number">#${number}</div><div class="button-name">Button ${number}</div><div class="status">queue</div>`;
-                setupButtonInteractions(button);
-                container.appendChild(button);
+        const translations = {
+            zh: {
+                addName: "添加名稱",
+                save: "保存",
+                load: "加載",
+                next: "下一步",
+                copyOutput: "複製輸出",
+                outputPlaceholder: "輸出將顯示在這裡...",
+                history: "歷史記錄",
+                queue: "等待中",
+                looted: "已領取",
+                locked: "已鎖定",
+                copiedToClipboard: "輸出已複製到剪貼板！",
+                copyError: "複製文本時出錯: ",
+                instructions: "操作說明"
+            },
+            en: {
+                addName: "Add name",
+                save: "Save",
+                load: "Load",
+                next: "Next",
+                copyOutput: "Copy Output",
+                outputPlaceholder: "Output will be displayed here...",
+                history: "History",
+                queue: "Queue",
+                looted: "Collected",
+                locked: "Locked",
+                copiedToClipboard: "Output copied to clipboard!",
+                copyError: "Error in copying text: ",
+                instructions: "Instructions"
             }
+        };
 
-            function setupButtonInteractions(button) {
-                button.addEventListener('contextmenu', event => {
-                    event.preventDefault();
-                    const nameElement = button.querySelector('.button-name');
-                    nameElement.setAttribute('contenteditable', 'true');
-                    nameElement.focus();
+        let currentLang = 'zh';
+        let gridContainer, historyList, fileInput;
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-zh]').forEach(elem => {
+                elem.textContent = elem.getAttribute(`data-${lang}`);
+            });
+            document.querySelectorAll('select').forEach(select => {
+                select.querySelectorAll('option').forEach(option => {
+                    option.textContent = translations[lang][option.value];
                 });
+            });
+            updateOutput();
+        }
 
-                button.addEventListener('blur', event => {
-                    const nameElement = button.querySelector('.button-name');
-                    nameElement.setAttribute('contenteditable', 'false');
-                }, true);
-
-                button.addEventListener('click', () => {
-                    const statusElement = button.querySelector('.status');
-                    switch (statusElement.textContent) {
-                        case 'queue':
-                            statusElement.textContent = 'looted';
-                            break;
-                        case 'looted':
-                            statusElement.textContent = 'queue';
-                            break;
-                        case 'locked':
-                            break;
-                    }
-                });
-
-                button.addEventListener('dblclick', event => {
-                    event.preventDefault();
-                    const statusElement = button.querySelector('.status');
-                    statusElement.textContent = statusElement.textContent === 'locked' ? 'queue' : 'locked';
-                });
-            }
-
-            function rollButtons() {
-                const allButtons = Array.from(container.children);
-                const lockedButtons = allButtons.filter(btn => btn.querySelector('.status').textContent === 'locked');
-                const queueButtons = allButtons.filter(btn => btn.querySelector('.status').textContent === 'queue');
-                const lootedButtons = allButtons.filter(btn => btn.querySelector('.status').textContent === 'looted');
-
-                lootedButtons.forEach(button => button.querySelector('.status').textContent = 'queue');
-
-                const newOrder = [];
-                lockedButtons.forEach(lockedButton => {
-                    const index = allButtons.indexOf(lockedButton);
-                    newOrder[index] = lockedButton;
-                });
-
-                let freeIndex = 0;
-                for (let i = 0; i < allButtons.length; i++) {
-                    if (!newOrder[i]) {
-                        if (queueButtons[freeIndex]) {
-                            newOrder[i] = queueButtons[freeIndex++];
-                        } else if (lootedButtons[0]) {
-                            newOrder[i] = lootedButtons.shift();
-                        }
-                    }
-                }
-
-                newOrder.forEach(btn => container.appendChild(btn));
-                saveButtons();
+        function addGridItem() {
+            const itemCount = gridContainer.children.length;
+            if (itemCount < 24) {
+                const item = document.createElement('div');
+                item.className = 'grid-item queue';
+                item.innerHTML = `
+                    <span>${itemCount + 1}</span>
+                    <input type="text" placeholder="name" value="name ${itemCount + 1}">
+                    <select onchange="updateItemStatus(this)">
+                        <option value="queue">${translations[currentLang].queue}</option>
+                        <option value="looted">${translations[currentLang].looted}</option>
+                        <option value="locked">${translations[currentLang].locked}</option>
+                    </select>
+                    <button onclick="deleteGridItem(this.parentNode)">X</button>
+                `;
+                gridContainer.appendChild(item);
                 updateOutput();
             }
+        }
 
-            function saveButtons() {
-                const buttonsData = Array.from(container.children).map(btn => ({
-                    number: btn.querySelector('.number').textContent,
-                    name: btn.querySelector('.button-name').textContent,
-                    status: btn.querySelector('.status').textContent
-                }));
-                localStorage.setItem('buttonsData', JSON.stringify(buttonsData));
-            }
+        function updateItemStatus(selectElement) {
+            const gridItem = selectElement.closest('.grid-item');
+            gridItem.className = 'grid-item ' + selectElement.value;
+        }
 
-            function loadButtons() {
-                const buttonsData = JSON.parse(localStorage.getItem('buttonsData'));
-                if (buttonsData) {
-                    container.innerHTML = '';
-                    buttonsData.forEach(data => {
-                        const button = document.createElement('div');
-                        button.className = 'name';
-                        button.innerHTML = `<div class="number">${data.number}</div><div class="button-name">${data.name}</div><div class="status">${data.status}</div>`;
-                        setupButtonInteractions(button);
-                        container.appendChild(button);
-                    });
-                }
-            }
+        function deleteGridItem(item) {
+            gridContainer.removeChild(item);
+            updateItemNumbers();
+            updateOutput();
+        }
 
-            function updateOutput() {
-                const output = document.getElementById('output');
-                const buttonsData = Array.from(container.children).map(btn => `${btn.querySelector('.number').textContent}: ${btn.querySelector('.button-name').textContent}`);
-                output.textContent = '/rs : ' + buttonsData.join(', ');
-            }
+        function updateItemNumbers() {
+            Array.from(gridContainer.children).forEach((item, index) => {
+                item.querySelector('span').textContent = index + 1;
+            });
+        }
 
-            function recordHistory() {
-                const outputText = document.getElementById('output').textContent;
-                const timestamp = new Date().toLocaleString('zh-Hant', {
-                    year: 'numeric', month: '2-digit', day: '2-digit',
-                    hour: '2-digit', minute: '2-digit', second: '2-digit'
-                });
+        function saveData() {
+            const data = {
+                items: Array.from(gridContainer.children).map(item => ({
+                    number: item.querySelector('span').textContent,
+                    name: item.querySelector('input').value,
+                    status: item.querySelector('select').value
+                })),
+                history: Array.from(historyList.children).map(li => li.textContent)
+            };
+            localStorage.setItem('gridData', JSON.stringify(data));
+            downloadJSON(data);
+        }
 
-                const historyItem = document.createElement('li');
-                historyItem.className = 'list-group-item';
-                historyItem.textContent = `${timestamp} - ${outputText}`;
-
-                historyList.appendChild(historyItem);
-                saveHistory();
-            }
-
-            function saveHistory() {
-                const historyData = Array.from(historyList.children).map(item => item.textContent);
-                localStorage.setItem('historyData', JSON.stringify(historyData));
-            }
-
-            function loadHistory() {
-                const historyData = JSON.parse(localStorage.getItem('historyData'));
-                if (historyData) {
-                    historyList.innerHTML = '';
-                    historyData.forEach(record => {
-                        const historyItem = document.createElement('li');
-                        historyItem.className = 'list-group-item';
-                        historyItem.textContent = record;
-                        historyList.appendChild(historyItem);
-                    });
-                }
-            }
-
-            function downloadJSON() {
-                const buttonsData = JSON.parse(localStorage.getItem('buttonsData'));
-                const historyData = JSON.parse(localStorage.getItem('historyData'));
-                const data = {
-                    buttons: buttonsData,
-                    history: historyData
+        function loadFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const data = JSON.parse(e.target.result);
+                    loadData(data);
                 };
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'data.json';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                reader.readAsText(file);
             }
+        }
 
-            function loadFromJSON(data) {
-                if (data.buttons) {
-                    localStorage.setItem('buttonsData', JSON.stringify(data.buttons));
-                    loadButtons();
-                }
-                if (data.history) {
-                    localStorage.setItem('historyData', JSON.stringify(data.history));
-                    loadHistory();
-                }
-            }
+        function loadData(data) {
+            gridContainer.innerHTML = '';
+            data.items.forEach(item => {
+                const gridItem = document.createElement('div');
+                gridItem.className = `grid-item ${item.status}`;
+                gridItem.innerHTML = `
+                    <span>${item.number}</span>
+                    <input type="text" value="${item.name}">
+                    <select onchange="updateItemStatus(this)">
+                        <option value="queue" ${item.status === 'queue' ? 'selected' : ''}>${translations[currentLang].queue}</option>
+                        <option value="looted" ${item.status === 'looted' ? 'selected' : ''}>${translations[currentLang].looted}</option>
+                        <option value="locked" ${item.status === 'locked' ? 'selected' : ''}>${translations[currentLang].locked}</option>
+                    </select>
+                    <button onclick="deleteGridItem(this.parentNode)">X</button>
+                `;
+                gridContainer.appendChild(gridItem);
+            });
+            historyList.innerHTML = data.history.map(h => `<li>${h}</li>`).join('');
+            updateOutput();
+        }
+
+        function nextStep() {
+            const items = Array.from(gridContainer.children);
+            const locked = items.filter(item => item.querySelector('select').value === 'locked');
+            const queue = items.filter(item => item.querySelector('select').value === 'queue');
+            const looted = items.filter(item => item.querySelector('select').value === 'looted');
+            
+            looted.forEach(item => {
+                item.querySelector('select').value = 'queue';
+                item.className = 'grid-item queue';
+            });
+            
+            gridContainer.innerHTML = '';
+            [...locked, ...queue, ...looted].forEach((item, index) => {
+                item.querySelector('span').textContent = index + 1;
+                gridContainer.appendChild(item);
+            });
+            
+            updateOutput();
+            recordHistory();
+        }
+
+        function updateOutput() {
+            const output = document.getElementById('output');
+            const items = Array.from(gridContainer.children);
+            output.textContent = '/rs : ' + items.map(item => 
+                `${item.querySelector('span').textContent}: ${item.querySelector('input').value}`
+            ).join(', ');
+        }
+
+        function recordHistory() {
+            const li = document.createElement('li');
+            li.textContent = new Date().toLocaleString() + ' - ' + document.getElementById('output').textContent;
+            historyList.appendChild(li);
+        }
+
+        function copyOutput() {
+            const outputText = document.getElementById('output').textContent;
+            navigator.clipboard.writeText(outputText)
+                .then(() => alert(translations[currentLang].copiedToClipboard))
+                .catch(err => alert(translations[currentLang].copyError + err));
+        }
+
+        function downloadJSON(data) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'grid_data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            gridContainer = document.getElementById('gridContainer');
+            historyList = document.getElementById('historyList');
+            fileInput = document.getElementById('fileInput');
+
+            document.getElementById('addButton').addEventListener('click', addGridItem);
+            document.getElementById('saveButton').addEventListener('click', saveData);
+            document.getElementById('loadButton').addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', loadFile);
+            document.getElementById('nextButton').addEventListener('click', nextStep);
+            document.getElementById('copyButton').addEventListener('click', copyOutput);
+
+            // 初始化時添加一個項目
+            addGridItem();
         });
+    </script>
+</body>
+</html>
     </script>
 </body>
 </html>
