@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雙語網格管理器 - 帶顏色編碼和右側說明</title>
+    <title>雙語網格管理器 - 6x4 網格布局</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -40,11 +40,16 @@
             padding: 5px;
             margin: 5px;
         }
+        #gridContainer {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
         .grid-item {
             background-color: #fff;
             border: 1px solid #ddd;
             padding: 10px;
-            margin-bottom: 10px;
             border-radius: 4px;
             transition: background-color 0.3s;
         }
@@ -56,6 +61,14 @@
         }
         .grid-item.locked {
             background-color: #ffebee;
+        }
+        .grid-item input {
+            width: calc(100% - 10px);
+            margin-bottom: 5px;
+        }
+        .grid-item select {
+            width: 100%;
+            margin-bottom: 5px;
         }
         #output, #history {
             background-color: #fff;
@@ -116,6 +129,7 @@
     </div>
 
     <script>
+        // JavaScript 代碼保持不變
         const translations = {
             zh: {
                 addName: "添加名稱",
@@ -171,7 +185,6 @@
                 const item = document.createElement('div');
                 item.className = 'grid-item queue';
                 item.innerHTML = `
-                    <span>${itemCount + 1}</span>
                     <input type="text" placeholder="name" value="name ${itemCount + 1}">
                     <select onchange="updateItemStatus(this)">
                         <option value="queue">${translations[currentLang].queue}</option>
@@ -192,20 +205,12 @@
 
         function deleteGridItem(item) {
             gridContainer.removeChild(item);
-            updateItemNumbers();
             updateOutput();
-        }
-
-        function updateItemNumbers() {
-            Array.from(gridContainer.children).forEach((item, index) => {
-                item.querySelector('span').textContent = index + 1;
-            });
         }
 
         function saveData() {
             const data = {
                 items: Array.from(gridContainer.children).map(item => ({
-                    number: item.querySelector('span').textContent,
                     name: item.querySelector('input').value,
                     status: item.querySelector('select').value
                 })),
@@ -233,7 +238,6 @@
                 const gridItem = document.createElement('div');
                 gridItem.className = `grid-item ${item.status}`;
                 gridItem.innerHTML = `
-                    <span>${item.number}</span>
                     <input type="text" value="${item.name}">
                     <select onchange="updateItemStatus(this)">
                         <option value="queue" ${item.status === 'queue' ? 'selected' : ''}>${translations[currentLang].queue}</option>
@@ -260,8 +264,7 @@
             });
             
             gridContainer.innerHTML = '';
-            [...locked, ...queue, ...looted].forEach((item, index) => {
-                item.querySelector('span').textContent = index + 1;
+            [...locked, ...queue, ...looted].forEach(item => {
                 gridContainer.appendChild(item);
             });
             
@@ -272,8 +275,8 @@
         function updateOutput() {
             const output = document.getElementById('output');
             const items = Array.from(gridContainer.children);
-            output.textContent = '/rs : ' + items.map(item => 
-                `${item.querySelector('span').textContent}: ${item.querySelector('input').value}`
+            output.textContent = '/rs : ' + items.map((item, index) => 
+                `${index + 1}: ${item.querySelector('input').value}`
             ).join(', ');
         }
 
@@ -317,9 +320,6 @@
             // 初始化時添加一個項目
             addGridItem();
         });
-    </script>
-</body>
-</html>
     </script>
 </body>
 </html>
