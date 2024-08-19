@@ -316,26 +316,89 @@
             updateOutput();
         }
 
-        function nextStep() {
-            const items = Array.from(gridContainer.children);
-            const locked = items.filter(item => item.querySelector('select').value === 'locked');
-            const queue = items.filter(item => item.querySelector('select').value === 'queue');
-            const looted = items.filter(item => item.querySelector('select').value === 'looted');
-            
-            looted.forEach(item => {
-                item.querySelector('select').value = 'queue';
-                item.className = 'grid-item queue';
-            });
-            
-            gridContainer.innerHTML = '';
-            [...locked, ...queue, ...looted].forEach((item, index) => {
-                item.querySelector('.item-number').textContent = index + 1;
-                gridContainer.appendChild(item);
-            });
-            
-            updateOutput();
-            recordHistory();
+       function nextStep() {
+    const items = Array.from(gridContainer.children);
+    const newOrder = [];
+
+    // 首先，保持所有 locked 項目在原位
+    items.forEach((item, index) => {
+        if (item.querySelector('select').value === 'locked') {
+            newOrder[index] = item;
         }
+    });
+
+    // 然後，將所有 queue 項目插入到未被 locked 項目佔據的位置
+    const queue = items.filter(item => item.querySelector('select').value === 'queue');
+    let queueIndex = 0;
+    for (let i = 0; i < items.length; i++) {
+        if (!newOrder[i] && queueIndex < queue.length) {
+            newOrder[i] = queue[queueIndex++];
+        }
+    }
+
+    // 最後，將所有 looted 項目（轉為 queue）添加到末尾
+    const looted = items.filter(item => item.querySelector('select').value === 'looted');
+    looted.forEach(item => {
+        item.querySelector('select').value = 'queue';
+        item.className = 'grid-item queue';
+        newOrder.push(item);
+    });
+
+    // 清空並重新填充 gridContainer
+    gridContainer.innerHTML = '';
+    newOrder.forEach((item, index) => {
+        if (item) {
+            item.querySelector('.item-number').textContent = index + 1;
+            gridContainer.appendChild(item);
+        }
+    });
+
+    updateOutput();
+    recordHistory();
+}
+
+function addGridItem() {
+    const itemCount = gridContainer.children.length;
+    if (itemCount < 24) {
+        const item = document.createElement('div');
+        item.className = 'grid-item queue';
+        
+        // 找到第一個可用的位置（不是 locked 的位置）
+        let newItemNumber = itemCount + 1;
+        for (let i = 0; i < itemCount; i++) {
+            if (gridContainer.children[i].querySelector('select').value !== 'locked') {
+                newItemNumber = i + 1;
+                break;
+            }
+        }
+
+        item.innerHTML = `
+            <div class="item-number">${newItemNumber}</div>
+            <input type="text" placeholder="name" value="name ${newItemNumber}">
+            <select onchange="updateItemStatus(this)">
+                <option value="queue">${translations[currentLang].queue}</option>
+                <option value="looted">${translations[currentLang].looted}</option>
+                <option value="locked">${translations[currentLang].locked}</option>
+            </select>
+            <button onclick="deleteGridItem(this.parentNode)">X</button>
+        `;
+
+        // 將新項目插入到正確的位置
+        if (newItemNumber <= itemCount) {
+            gridContainer.insertBefore(item, gridContainer.children[newItemNumber - 1]);
+        } else {
+            gridContainer.appendChild(item);
+        }
+
+        updateItemNumbers();
+        updateOutput();
+    }
+}
+
+
+
+Claude does not have the ability to run the code it generates yet.
+Claude can make mistakes. Please double-check responses.
 
         function updateOutput() {
             const output = document.getElementById('output');
