@@ -235,24 +235,42 @@
         }
 
         function addGridItem() {
-            const itemCount = gridContainer.children.length;
-            if (itemCount < 24) {
-                const item = document.createElement('div');
-                item.className = 'grid-item queue';
-                item.innerHTML = `
-                    <div class="item-number">${itemCount + 1}</div>
-                    <input type="text" placeholder="name" value="name ${itemCount + 1}">
-                    <select onchange="updateItemStatus(this)">
-                        <option value="queue">${translations[currentLang].queue}</option>
-                        <option value="looted">${translations[currentLang].looted}</option>
-                        <option value="locked">${translations[currentLang].locked}</option>
-                    </select>
-                    <button onclick="deleteGridItem(this.parentNode)">X</button>
-                `;
-                gridContainer.appendChild(item);
-                updateOutput();
+    const itemCount = gridContainer.children.length;
+    if (itemCount < 24) {
+        const item = document.createElement('div');
+        item.className = 'grid-item queue';
+        
+        // 找到第一個可用的位置（不是 locked 的位置）
+        let newItemNumber = itemCount + 1;
+        for (let i = 0; i < itemCount; i++) {
+            if (gridContainer.children[i].querySelector('select').value !== 'locked') {
+                newItemNumber = i + 1;
+                break;
             }
         }
+
+        item.innerHTML = `
+            <div class="item-number">${newItemNumber}</div>
+            <input type="text" placeholder="name" value="name ${newItemNumber}">
+            <select onchange="updateItemStatus(this)">
+                <option value="queue">${translations[currentLang].queue}</option>
+                <option value="looted">${translations[currentLang].looted}</option>
+                <option value="locked">${translations[currentLang].locked}</option>
+            </select>
+            <button onclick="deleteGridItem(this.parentNode)">X</button>
+        `;
+
+        // 將新項目插入到正確的位置
+        if (newItemNumber <= itemCount) {
+            gridContainer.insertBefore(item, gridContainer.children[newItemNumber - 1]);
+        } else {
+            gridContainer.appendChild(item);
+        }
+
+        updateItemNumbers();
+        updateOutput();
+    }
+}
 
         function updateItemStatus(selectElement) {
             const gridItem = selectElement.closest('.grid-item');
@@ -356,49 +374,6 @@
     updateOutput();
     recordHistory();
 }
-
-function addGridItem() {
-    const itemCount = gridContainer.children.length;
-    if (itemCount < 24) {
-        const item = document.createElement('div');
-        item.className = 'grid-item queue';
-        
-        // 找到第一個可用的位置（不是 locked 的位置）
-        let newItemNumber = itemCount + 1;
-        for (let i = 0; i < itemCount; i++) {
-            if (gridContainer.children[i].querySelector('select').value !== 'locked') {
-                newItemNumber = i + 1;
-                break;
-            }
-        }
-
-        item.innerHTML = `
-            <div class="item-number">${newItemNumber}</div>
-            <input type="text" placeholder="name" value="name ${newItemNumber}">
-            <select onchange="updateItemStatus(this)">
-                <option value="queue">${translations[currentLang].queue}</option>
-                <option value="looted">${translations[currentLang].looted}</option>
-                <option value="locked">${translations[currentLang].locked}</option>
-            </select>
-            <button onclick="deleteGridItem(this.parentNode)">X</button>
-        `;
-
-        // 將新項目插入到正確的位置
-        if (newItemNumber <= itemCount) {
-            gridContainer.insertBefore(item, gridContainer.children[newItemNumber - 1]);
-        } else {
-            gridContainer.appendChild(item);
-        }
-
-        updateItemNumbers();
-        updateOutput();
-    }
-}
-
-
-
-Claude does not have the ability to run the code it generates yet.
-Claude can make mistakes. Please double-check responses.
 
         function updateOutput() {
             const output = document.getElementById('output');
