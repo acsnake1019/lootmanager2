@@ -119,6 +119,18 @@
         .font-size-btn:hover {
             background-color: #0056b3;
         }
+        .delete-button {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 8px;
+    cursor: pointer;
+    margin-left: 5px;
+}
+.delete-button:hover {
+    background-color: #ff3333;
+}
     </style>
 </head>
 <body>
@@ -239,42 +251,54 @@
             }
         }
 
-        function addGridItem() {
-            const items = Array.from(gridContainer.children);
-            const itemCount = items.filter(item => item.style.display !== 'none').length;
-            if (itemCount < 24) {
-                let newItem;
-                if (items[itemCount]) {
-                    newItem = items[itemCount];
-                    newItem.style.display = '';
-                } else {
-                    newItem = document.createElement('div');
-                    newItem.className = 'grid-item queue';
-                    newItem.draggable = true;
-                    newItem.innerHTML = `
-                        <div class="item-number">${itemCount + 1}</div>
-                        <input type="text" placeholder="name" value="name ${itemCount + 1}">
-                        <select onchange="updateItemStatus(this)">
-                            <option value="queue">${translations[currentLang].queue}</option>
-                            <option value="looted">${translations[currentLang].looted}</option>
-                            <option value="locked">${translations[currentLang].locked}</option>
-                        </select>
-                    `;
-                    addDragListeners(newItem);
-                    gridContainer.appendChild(newItem);
-                }
-                updateOutput();
-            }
+   function addGridItem() {
+    const items = Array.from(gridContainer.children);
+    const itemCount = items.filter(item => item.style.display !== 'none').length;
+    if (itemCount < 24) {
+        let newItem;
+        if (items[itemCount]) {
+            newItem = items[itemCount];
+            newItem.style.display = '';
+        } else {
+            newItem = document.createElement('div');
+            newItem.className = 'grid-item queue';
+            newItem.draggable = true;
+            newItem.innerHTML = `
+                <div class="item-number">${itemCount + 1}</div>
+                <input type="text" placeholder="name" value="name ${itemCount + 1}">
+                <select onchange="updateItemStatus(this)">
+                    <option value="queue">${translations[currentLang].queue}</option>
+                    <option value="looted">${translations[currentLang].looted}</option>
+                    <option value="locked">${translations[currentLang].locked}</option>
+                </select>
+                <button class="delete-button" onclick="deleteGridItem(this.parentNode)">X</button>
+            `;
+            addDragListeners(newItem);
+            gridContainer.appendChild(newItem);
         }
-
+        updateOutput();
+    }
+}
+    function deleteGridItem(item) {
+    item.style.display = 'none';
+    item.querySelector('input').value = '';
+    item.querySelector('select').value = 'queue';
+    updateItemNumbers();
+    updateOutput();
+    }
         function addDragListeners(item) {
             item.addEventListener('dragstart', dragStart);
             item.addEventListener('dragover', dragOver);
             item.addEventListener('dragleave', dragLeave);
             item.addEventListener('drop', drop);
             item.addEventListener('dragend', dragEnd);
-        }
-
+     }
+        function updateItemNumbers() {
+    const visibleItems = Array.from(gridContainer.children).filter(item => item.style.display !== 'none');
+    visibleItems.forEach((item, index) => {
+        item.querySelector('.item-number').textContent = index + 1;
+    });
+    }
         function dragStart(e) {
             if (this.querySelector('select').value === 'locked') {
                 e.preventDefault();
@@ -386,18 +410,19 @@
             downloadJSON(data);
         }
 
-        function loadData(data) {
-            gridContainer.innerHTML = ''; // 清空現有項目
-            data.items.forEach((item, index) => {
-                addGridItem(); // 添加新項目
-                const gridItem = gridContainer.children[index];
-                gridItem.querySelector('input').value = item.name;
-                gridItem.querySelector('select').value = item.status;
-                updateItemStatus(gridItem.querySelector('select'));
-            });
-            historyList.innerHTML = data.history.map(h => `<li>${h}</li>`).join('');
-            updateOutput();
-        }
+       function loadData(data) {
+    gridContainer.innerHTML = ''; // 清空現有項目
+    data.items.forEach((item, index) => {
+        addGridItem(); // 添加新項目
+        const gridItem = gridContainer.children[index];
+        gridItem.querySelector('input').value = item.name;
+        gridItem.querySelector('select').value = item.status;
+        updateItemStatus(gridItem.querySelector('select'));
+    });
+    historyList.innerHTML = data.history.map(h => `<li>${h}</li>`).join('');
+    updateItemNumbers(); // 更新項目編號
+    updateOutput();
+}
 
         function loadFile(event) {
             const file = event.target.files[0];
