@@ -284,9 +284,10 @@
 }
 
         function updateItemStatus(selectElement) {
-            const gridItem = selectElement.closest('.grid-item');
-            gridItem.className = 'grid-item ' + selectElement.value;
-        }
+    const gridItem = selectElement.closest('.grid-item');
+    gridItem.className = 'grid-item ' + selectElement.value;
+    gridItem.draggable = selectElement.value !== 'locked';
+}
 
         function deleteGridItem(item) {
             gridContainer.removeChild(item);
