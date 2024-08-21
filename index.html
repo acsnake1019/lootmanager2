@@ -250,15 +250,7 @@
         item.className = 'grid-item queue';
         item.draggable = true;
         
-        // 找到第一個可用的位置（不是 locked 的位置）
-        let newItemNumber = itemCount + 1;
-        for (let i = 0; i < itemCount; i++) {
-            if (gridContainer.children[i].querySelector('select').value !== 'locked') {
-                newItemNumber = i + 1;
-                break;
-            }
-        }
-
+        const newItemNumber = itemCount + 1;
         item.innerHTML = `
             <div class="item-number">${newItemNumber}</div>
             <input type="text" placeholder="name" value="name ${newItemNumber}">
@@ -270,12 +262,7 @@
             <button onclick="deleteGridItem(this.parentNode)">X</button>
         `;
 
-        // 將新項目插入到正確的位置
-        if (newItemNumber <= itemCount) {
-            gridContainer.insertBefore(item, gridContainer.children[newItemNumber - 1]);
-        } else {
-            gridContainer.appendChild(item);
-        }
+        insertItemAtCorrectPosition(item, itemCount);
 
         addDragListeners(item);
         updateItemNumbers();
@@ -296,10 +283,14 @@
         }
 
         function updateItemNumbers() {
-            Array.from(gridContainer.children).forEach((item, index) => {
-                item.querySelector('.item-number').textContent = index + 1;
-            });
+    let currentNumber = 1;
+    Array.from(gridContainer.children).forEach((item) => {
+        const numberElement = item.querySelector('.item-number');
+        if (item.querySelector('select').value !== 'locked') {
+            numberElement.textContent = currentNumber++;
         }
+    });
+}
 
         function saveData() {
             const data = {
@@ -474,7 +465,7 @@ function dragLeave() {
 function drop(e) {
     e.preventDefault();
     this.classList.remove('drag-over');
-    const draggedItemNumber = e.dataTransfer.getData('text/plain');
+    const draggedItemNumber = parseInt(e.dataTransfer.getData('text/plain'));
     const draggedItem = document.querySelector(`.grid-item:nth-child(${draggedItemNumber})`);
     
     if (this.querySelector('select').value !== 'locked' && draggedItem.querySelector('select').value !== 'locked') {
@@ -483,15 +474,39 @@ function drop(e) {
             const fromIndex = items.indexOf(draggedItem);
             const toIndex = items.indexOf(this);
             
-            if (fromIndex < toIndex) {
-                gridContainer.insertBefore(draggedItem, this.nextSibling);
-            } else {
-                gridContainer.insertBefore(draggedItem, this);
-            }
+            // 移除拖動的項目
+            gridContainer.removeChild(draggedItem);
+            
+            // 在正確的位置插入項目
+            insertItemAtCorrectPosition(draggedItem, toIndex);
             
             updateItemNumbers();
             updateOutput();
         }
+    }
+}
+
+function insertItemAtCorrectPosition(item, targetIndex) {
+    const items = Array.from(gridContainer.children);
+    let insertIndex = targetIndex;
+
+    // 如果目標位置被 locked 項目佔據，找到最近的可用位置
+    while (insertIndex < items.length && items[insertIndex].querySelector('select').value === 'locked') {
+        insertIndex++;
+    }
+
+    if (insertIndex >= items.length) {
+        // 如果到達列表末尾，從目標位置向前查找最近的可用位置
+        insertIndex = targetIndex;
+        while (insertIndex > 0 && items[insertIndex - 1].querySelector('select').value === 'locked') {
+            insertIndex--;
+        }
+    }
+
+    if (insertIndex < items.length) {
+        gridContainer.insertBefore(item, items[insertIndex]);
+    } else {
+        gridContainer.appendChild(item);
     }
 }
 
