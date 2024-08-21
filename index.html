@@ -298,7 +298,7 @@
     visibleItems.forEach((item, index) => {
         item.querySelector('.item-number').textContent = index + 1;
     });
-    }
+}
         function dragStart(e) {
             if (this.querySelector('select').value === 'locked') {
                 e.preventDefault();
@@ -365,23 +365,46 @@
         }
 
         function nextStep() {
-            const items = Array.from(gridContainer.children);
-            const locked = items.filter(item => item.querySelector('select').value === 'locked');
-            const queue = items.filter(item => item.querySelector('select').value === 'queue');
-            const looted = items.filter(item => item.querySelector('select').value === 'looted');
-            
-            looted.forEach(item => {
-                item.querySelector('select').value = 'queue';
-                updateItemStatus(item.querySelector('select'));
-            });
-            
-            [...locked, ...queue, ...looted].forEach((item, index) => {
-                gridContainer.appendChild(item);
-            });
-            
-            updateOutput();
-            recordHistory();
+    const items = Array.from(gridContainer.children).filter(item => item.style.display !== 'none');
+    const newOrder = new Array(items.length);
+
+    // 首先，將所有 locked 項目保持在原位
+    items.forEach((item, index) => {
+        if (item.querySelector('select').value === 'locked') {
+            newOrder[index] = item;
         }
+    });
+
+    // 然後，處理 queue 和 looted 項目
+    const queueAndLooted = items.filter(item => item.querySelector('select').value !== 'locked');
+    let queueIndex = 0;
+
+    // 將 looted 項目改為 queue 狀態
+    queueAndLooted.forEach(item => {
+        if (item.querySelector('select').value === 'looted') {
+            item.querySelector('select').value = 'queue';
+            updateItemStatus(item.querySelector('select'));
+        }
+    });
+
+    // 填充剩餘的位置
+    for (let i = 0; i < newOrder.length; i++) {
+        if (!newOrder[i] && queueIndex < queueAndLooted.length) {
+            newOrder[i] = queueAndLooted[queueIndex++];
+        }
+    }
+
+    // 重新排序 gridContainer
+    newOrder.forEach((item, index) => {
+        if (item) {
+            gridContainer.appendChild(item);
+            item.querySelector('.item-number').textContent = index + 1;
+        }
+    });
+
+    updateOutput();
+    recordHistory();
+}
 
          function recordHistory() {
             const li = document.createElement('li');
