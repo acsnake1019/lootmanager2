@@ -440,6 +440,62 @@
                 loadData(JSON.parse(savedData));
             }
         });
+        function addDragListeners(item) {
+    item.addEventListener('dragstart', dragStart);
+    item.addEventListener('dragover', dragOver);
+    item.addEventListener('dragleave', dragLeave);
+    item.addEventListener('drop', drop);
+    item.addEventListener('dragend', dragEnd);
+}
+
+function dragStart(e) {
+    if (this.querySelector('select').value === 'locked') {
+        e.preventDefault();
+        return;
+    }
+    this.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', this.querySelector('.item-number').textContent);
+}
+
+function dragOver(e) {
+    e.preventDefault();
+    if (this.querySelector('select').value !== 'locked') {
+        this.classList.add('drag-over');
+    }
+}
+
+function dragLeave() {
+    this.classList.remove('drag-over');
+}
+
+function drop(e) {
+    e.preventDefault();
+    this.classList.remove('drag-over');
+    const draggedItemNumber = e.dataTransfer.getData('text/plain');
+    const draggedItem = document.querySelector(`.grid-item:nth-child(${draggedItemNumber})`);
+    
+    if (this.querySelector('select').value !== 'locked' && draggedItem.querySelector('select').value !== 'locked') {
+        if (this !== draggedItem) {
+            const items = Array.from(gridContainer.children);
+            const fromIndex = items.indexOf(draggedItem);
+            const toIndex = items.indexOf(this);
+            
+            if (fromIndex < toIndex) {
+                gridContainer.insertBefore(draggedItem, this.nextSibling);
+            } else {
+                gridContainer.insertBefore(draggedItem, this);
+            }
+            
+            updateItemNumbers();
+            updateOutput();
+        }
+    }
+}
+
+function dragEnd() {
+    this.classList.remove('dragging');
+    document.querySelectorAll('.grid-item').forEach(item => item.classList.remove('drag-over'));
+}
     </script>
 </body>
 </html>
