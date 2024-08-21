@@ -114,6 +114,15 @@
         .font-size-btn:hover {
             background-color: #0056b3;
         }
+        .grid-item {
+    cursor: move;
+}
+.grid-item.locked {
+    cursor: not-allowed;
+}
+.grid-item.dragging {
+    opacity: 0.5;
+}
     </style>
 </head>
 <body>
@@ -234,11 +243,12 @@
             }
         }
 
-        function addGridItem() {
+    function addGridItem() {
     const itemCount = gridContainer.children.length;
     if (itemCount < 24) {
         const item = document.createElement('div');
         item.className = 'grid-item queue';
+        item.draggable = true;
         
         // 找到第一個可用的位置（不是 locked 的位置）
         let newItemNumber = itemCount + 1;
@@ -267,6 +277,7 @@
             gridContainer.appendChild(item);
         }
 
+        addDragListeners(item);
         updateItemNumbers();
         updateOutput();
     }
