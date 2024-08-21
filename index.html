@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EverQuest Loot Manager</title>
+    <title>EverQuest Looter Manager </title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -288,14 +288,14 @@
             item.addEventListener('dragend', dragEnd);
         }
 
-       function dragStart(e) {
-    if (this.querySelector('select').value === 'locked') {
-        e.preventDefault();
-        return;
-    }
-    e.dataTransfer.setData('text/plain', Array.from(gridContainer.children).indexOf(this).toString());
-    this.classList.add('dragging');
-}
+        function dragStart(e) {
+            if (this.querySelector('select').value === 'locked') {
+                e.preventDefault();
+                return;
+            }
+            e.dataTransfer.setData('text/plain', Array.from(gridContainer.children).indexOf(this).toString());
+            this.classList.add('dragging');
+        }
 
         function dragOver(e) {
             e.preventDefault();
@@ -309,43 +309,41 @@
         }
 
         function drop(e) {
-    e.preventDefault();
-    this.classList.remove('drag-over');
-    const draggedItemIndex = parseInt(e.dataTransfer.getData('text/plain'));
-    const draggedItem = gridContainer.children[draggedItemIndex];
-    
-    if (this.querySelector('select').value !== 'locked' && draggedItem.querySelector('select').value !== 'locked') {
-        if (this !== draggedItem) {
-            const tempName = this.querySelector('input').value;
-            const tempStatus = this.querySelector('select').value;
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            const draggedItemIndex = parseInt(e.dataTransfer.getData('text/plain'));
+            const draggedItem = gridContainer.children[draggedItemIndex];
             
-            this.querySelector('input').value = draggedItem.querySelector('input').value;
-            this.querySelector('select').value = draggedItem.querySelector('select').value;
-            
-            draggedItem.querySelector('input').value = tempName;
-            draggedItem.querySelector('select').value = tempStatus;
-            
-            updateItemStatus(this.querySelector('select'));
-            updateItemStatus(draggedItem.querySelector('select'));
-            
-            updateOutput();
+            if (this.querySelector('select').value !== 'locked' && draggedItem.querySelector('select').value !== 'locked') {
+                if (this !== draggedItem) {
+                    const tempName = this.querySelector('input').value;
+                    const tempStatus = this.querySelector('select').value;
+                    
+                    this.querySelector('input').value = draggedItem.querySelector('input').value;
+                    this.querySelector('select').value = draggedItem.querySelector('select').value;
+                    
+                    draggedItem.querySelector('input').value = tempName;
+                    draggedItem.querySelector('select').value = tempStatus;
+                    
+                    updateItemStatus(this.querySelector('select'));
+                    updateItemStatus(draggedItem.querySelector('select'));
+                    
+                    updateOutput();
+                }
+            }
         }
-    }
-}
-这些函数正确地实现了拖放功能，并确保 locked 项目不能被拖动或作为放置目标。
-经过仔细检查，我可以确认这些关键功能都已正确实现。locked 项目保持在原位，looted 项目在 "下一步" 操作后移动到末尾并变为 queue 状态，而 queue 项目则保持在原有的非 locked 位置。
-如果您在实际使用中发现任何问题或需要进一步的调整，请随时告诉我。 CopyRetryClaude does not have the ability to run the code it generates yet.Claude can make mistakes. Please double-check responses.
 
         function dragEnd() {
             this.classList.remove('dragging');
             document.querySelectorAll('.grid-item').forEach(item => item.classList.remove('drag-over'));
         }
-     function updateItemStatus(selectElement) {
-    const gridItem = selectElement.closest('.grid-item');
-    gridItem.className = 'grid-item ' + selectElement.value;
-    gridItem.draggable = selectElement.value !== 'locked';
-    updateOutput();
-}
+
+        function updateItemStatus(selectElement) {
+            const gridItem = selectElement.closest('.grid-item');
+            gridItem.className = 'grid-item ' + selectElement.value;
+            gridItem.draggable = selectElement.value !== 'locked';
+            updateOutput();
+        }
 
         function deleteGridItem(item) {
             item.style.display = 'none';
@@ -362,7 +360,7 @@
             });
         }
 
-        function updateOutput() {
+       function updateOutput() {
             const output = document.getElementById('output');
             const items = Array.from(gridContainer.children).filter(item => item.style.display !== 'none');
             output.textContent = '/rs : ' + items.map((item, index) => 
@@ -371,57 +369,57 @@
         }
 
         function nextStep() {
-    const items = Array.from(gridContainer.children).filter(item => item.style.display !== 'none');
-    const newOrder = new Array(items.length);
+            const items = Array.from(gridContainer.children).filter(item => item.style.display !== 'none');
+            const newOrder = new Array(items.length);
 
-    // 保持 locked 项目在原位
-    items.forEach((item, index) => {
-        if (item.querySelector('select').value === 'locked') {
-            newOrder[index] = item;
+            // 保持 locked 项目在原位
+            items.forEach((item, index) => {
+                if (item.querySelector('select').value === 'locked') {
+                    newOrder[index] = item;
+                }
+            });
+
+            const queue = items.filter(item => item.querySelector('select').value === 'queue');
+            const looted = items.filter(item => item.querySelector('select').value === 'looted');
+
+            // 填充 queue 项目
+            let queueIndex = 0;
+            for (let i = 0; i < newOrder.length && queueIndex < queue.length; i++) {
+                if (!newOrder[i]) {
+                    newOrder[i] = queue[queueIndex++];
+                }
+            }
+
+            // 处理 looted 项目
+            for (let i = 0; i < newOrder.length && looted.length > 0; i++) {
+                if (!newOrder[i]) {
+                    const lootedItem = looted.shift();
+                    lootedItem.querySelector('select').value = 'queue';
+                    updateItemStatus(lootedItem.querySelector('select'));
+                    newOrder[i] = lootedItem;
+                }
+            }
+
+            // 如果还有剩余的 looted 项目，添加到数组末尾
+            while (looted.length > 0) {
+                const lootedItem = looted.shift();
+                lootedItem.querySelector('select').value = 'queue';
+                updateItemStatus(lootedItem.querySelector('select'));
+                newOrder.push(lootedItem);
+            }
+
+            // 重新排序 gridContainer
+            gridContainer.innerHTML = '';
+            newOrder.forEach((item, index) => {
+                if (item) {
+                    gridContainer.appendChild(item);
+                    item.querySelector('.item-number').textContent = index + 1;
+                }
+            });
+
+            updateOutput();
+            recordHistory();
         }
-    });
-
-    const queue = items.filter(item => item.querySelector('select').value === 'queue');
-    const looted = items.filter(item => item.querySelector('select').value === 'looted');
-
-    // 填充 queue 项目
-    let queueIndex = 0;
-    for (let i = 0; i < newOrder.length && queueIndex < queue.length; i++) {
-        if (!newOrder[i]) {
-            newOrder[i] = queue[queueIndex++];
-        }
-    }
-
-    // 处理 looted 项目
-    for (let i = 0; i < newOrder.length && looted.length > 0; i++) {
-        if (!newOrder[i]) {
-            const lootedItem = looted.shift();
-            lootedItem.querySelector('select').value = 'queue';
-            updateItemStatus(lootedItem.querySelector('select'));
-            newOrder[i] = lootedItem;
-        }
-    }
-
-    // 如果还有剩余的 looted 项目，添加到数组末尾
-    while (looted.length > 0) {
-        const lootedItem = looted.shift();
-        lootedItem.querySelector('select').value = 'queue';
-        updateItemStatus(lootedItem.querySelector('select'));
-        newOrder.push(lootedItem);
-    }
-
-    // 重新排序 gridContainer
-    gridContainer.innerHTML = '';
-    newOrder.forEach((item, index) => {
-        if (item) {
-            gridContainer.appendChild(item);
-            item.querySelector('.item-number').textContent = index + 1;
-        }
-    });
-
-    updateOutput();
-    recordHistory();
-}
 
         function recordHistory() {
             const li = document.createElement('li');
