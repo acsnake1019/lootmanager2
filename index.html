@@ -325,25 +325,27 @@
         }
 
         function loadData(data) {
-            gridContainer.innerHTML = '';
-            data.items.forEach((item, index) => {
-                const gridItem = document.createElement('div');
-                gridItem.className = `grid-item ${item.status}`;
-                gridItem.innerHTML = `
-                    <div class="item-number">${index + 1}</div>
-                    <input type="text" value="${item.name}">
-                    <select onchange="updateItemStatus(this)">
-                        <option value="queue" ${item.status === 'queue' ? 'selected' : ''}>${translations[currentLang].queue}</option>
-                        <option value="looted" ${item.status === 'looted' ? 'selected' : ''}>${translations[currentLang].looted}</option>
-                        <option value="locked" ${item.status === 'locked' ? 'selected' : ''}>${translations[currentLang].locked}</option>
-                    </select>
-                    <button onclick="deleteGridItem(this.parentNode)">X</button>
-                `;
-                gridContainer.appendChild(gridItem);
-            });
-            historyList.innerHTML = data.history.map(h => `<li>${h}</li>`).join('');
-            updateOutput();
-        }
+    gridContainer.innerHTML = '';
+    data.items.forEach((item, index) => {
+        const gridItem = document.createElement('div');
+        gridItem.className = `grid-item ${item.status}`;
+        gridItem.draggable = true;
+        gridItem.innerHTML = `
+            <div class="item-number">${index + 1}</div>
+            <input type="text" value="${item.name}">
+            <select onchange="updateItemStatus(this)">
+                <option value="queue" ${item.status === 'queue' ? 'selected' : ''}>${translations[currentLang].queue}</option>
+                <option value="looted" ${item.status === 'looted' ? 'selected' : ''}>${translations[currentLang].looted}</option>
+                <option value="locked" ${item.status === 'locked' ? 'selected' : ''}>${translations[currentLang].locked}</option>
+            </select>
+            <button onclick="deleteGridItem(this.parentNode)">X</button>
+        `;
+        addDragListeners(gridItem);
+        gridContainer.appendChild(gridItem);
+    });
+    historyList.innerHTML = data.history.map(h => `<li>${h}</li>`).join('');
+    updateOutput();
+}
 
        function nextStep() {
     const items = Array.from(gridContainer.children);
