@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雙語網格管理器 - 可拖放</title>
+    <title>雙語網格管理器 - 全功能版</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -79,12 +79,24 @@
             margin-bottom: 5px;
         }
         .grid-item select {
-            width: 100%;
+            width: calc(100% - 30px);
             margin-bottom: 5px;
         }
         .item-number {
             font-weight: bold;
             margin-bottom: 5px;
+        }
+        .delete-button {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 8px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .delete-button:hover {
+            background-color: #ff3333;
         }
         #output, #history {
             background-color: #fff;
@@ -119,18 +131,6 @@
         .font-size-btn:hover {
             background-color: #0056b3;
         }
-        .delete-button {
-    background-color: #ff4d4d;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 5px 8px;
-    cursor: pointer;
-    margin-left: 5px;
-}
-.delete-button:hover {
-    background-color: #ff3333;
-}
     </style>
 </head>
 <body>
@@ -251,54 +251,43 @@
             }
         }
 
-   function addGridItem() {
-    const items = Array.from(gridContainer.children);
-    const itemCount = items.filter(item => item.style.display !== 'none').length;
-    if (itemCount < 24) {
-        let newItem;
-        if (items[itemCount]) {
-            newItem = items[itemCount];
-            newItem.style.display = '';
-        } else {
-            newItem = document.createElement('div');
-            newItem.className = 'grid-item queue';
-            newItem.draggable = true;
-            newItem.innerHTML = `
-                <div class="item-number">${itemCount + 1}</div>
-                <input type="text" placeholder="name" value="name ${itemCount + 1}">
-                <select onchange="updateItemStatus(this)">
-                    <option value="queue">${translations[currentLang].queue}</option>
-                    <option value="looted">${translations[currentLang].looted}</option>
-                    <option value="locked">${translations[currentLang].locked}</option>
-                </select>
-                <button class="delete-button" onclick="deleteGridItem(this.parentNode)">X</button>
-            `;
-            addDragListeners(newItem);
-            gridContainer.appendChild(newItem);
+        function addGridItem() {
+            const items = Array.from(gridContainer.children);
+            const itemCount = items.filter(item => item.style.display !== 'none').length;
+            if (itemCount < 24) {
+                let newItem;
+                if (items[itemCount]) {
+                    newItem = items[itemCount];
+                    newItem.style.display = '';
+                } else {
+                    newItem = document.createElement('div');
+                    newItem.className = 'grid-item queue';
+                    newItem.draggable = true;
+                    newItem.innerHTML = `
+                        <div class="item-number">${itemCount + 1}</div>
+                        <input type="text" placeholder="name" value="name ${itemCount + 1}">
+                        <select onchange="updateItemStatus(this)">
+                            <option value="queue">${translations[currentLang].queue}</option>
+                            <option value="looted">${translations[currentLang].looted}</option>
+                            <option value="locked">${translations[currentLang].locked}</option>
+                        </select>
+                        <button class="delete-button" onclick="deleteGridItem(this.parentNode)">X</button>
+                    `;
+                    addDragListeners(newItem);
+                    gridContainer.appendChild(newItem);
+                }
+                updateOutput();
+            }
         }
-        updateOutput();
-    }
-}
-    function deleteGridItem(item) {
-    item.style.display = 'none';
-    item.querySelector('input').value = '';
-    item.querySelector('select').value = 'queue';
-    updateItemNumbers();
-    updateOutput();
-    }
+
         function addDragListeners(item) {
             item.addEventListener('dragstart', dragStart);
             item.addEventListener('dragover', dragOver);
             item.addEventListener('dragleave', dragLeave);
             item.addEventListener('drop', drop);
             item.addEventListener('dragend', dragEnd);
-     }
-        function updateItemNumbers() {
-    const visibleItems = Array.from(gridContainer.children).filter(item => item.style.display !== 'none');
-    visibleItems.forEach((item, index) => {
-        item.querySelector('.item-number').textContent = index + 1;
-    });
-}
+        }
+
         function dragStart(e) {
             if (this.querySelector('select').value === 'locked') {
                 e.preventDefault();
@@ -356,6 +345,21 @@
             updateOutput();
         }
 
+        function deleteGridItem(item) {
+            item.style.display = 'none';
+            item.querySelector('input').value = '';
+            item.querySelector('select').value = 'queue';
+            updateItemNumbers();
+            updateOutput();
+        }
+
+        function updateItemNumbers() {
+            const visibleItems = Array.from(gridContainer.children).filter(item => item.style.display !== 'none');
+            visibleItems.forEach((item, index) => {
+                item.querySelector('.item-number').textContent = index + 1;
+            });
+        }
+
         function updateOutput() {
             const output = document.getElementById('output');
             const items = Array.from(gridContainer.children).filter(item => item.style.display !== 'none');
@@ -365,48 +369,51 @@
         }
 
         function nextStep() {
-    const items = Array.from(gridContainer.children).filter(item => item.style.display !== 'none');
-    const newOrder = new Array(items.length);
+            const items = Array.from(gridContainer.children).filter(item => item.style.display !== 'none');
+            const newOrder = new Array(items.length);
 
-    // 首先，將所有 locked 項目保持在原位
-    items.forEach((item, index) => {
-        if (item.querySelector('select').value === 'locked') {
-            newOrder[index] = item;
+            // 首先，將所有 locked 項目保持在原位
+            items.forEach((item, index) => {
+                if (item.querySelector('select').value === 'locked') {
+                    newOrder[index] = item;
+                }
+            });
+
+            // 然後，處理 queue 和 looted 項目
+            const queueAndLooted = items.filter(item => item.querySelector('select').value !== 'locked');
+            let queueIndex = 0;
+
+            // 將 looted 項目改為 queue 狀態，並移到隊列末尾
+            queueAndLooted.forEach(item => {
+                if (item.querySelector('select').value === 'looted') {
+                    item.querySelector('select').value = 'queue';
+                    updateItemStatus(item.querySelector('select'));
+                }
+            });
+
+            // 填充剩餘的位置
+            for (let i = 0; i < newOrder.length; i++) {
+                if (!newOrder[i]) {
+                    if (queueIndex < queueAndLooted.length) {
+                        newOrder[i] = queueAndLooted[queueIndex++];
+                    }
+                }
+            }
+
+            // 重新排序 gridContainer
+            gridContainer.innerHTML = '';
+            newOrder.forEach((item, index) => {
+                if (item) {
+                    gridContainer.appendChild(item);
+                    item.querySelector('.item-number').textContent = index + 1;
+                }
+            });
+
+            updateOutput();
+            recordHistory();
         }
-    });
 
-    // 然後，處理 queue 和 looted 項目
-    const queueAndLooted = items.filter(item => item.querySelector('select').value !== 'locked');
-    let queueIndex = 0;
-
-    // 將 looted 項目改為 queue 狀態
-    queueAndLooted.forEach(item => {
-        if (item.querySelector('select').value === 'looted') {
-            item.querySelector('select').value = 'queue';
-            updateItemStatus(item.querySelector('select'));
-        }
-    });
-
-    // 填充剩餘的位置
-    for (let i = 0; i < newOrder.length; i++) {
-        if (!newOrder[i] && queueIndex < queueAndLooted.length) {
-            newOrder[i] = queueAndLooted[queueIndex++];
-        }
-    }
-
-    // 重新排序 gridContainer
-    newOrder.forEach((item, index) => {
-        if (item) {
-            gridContainer.appendChild(item);
-            item.querySelector('.item-number').textContent = index + 1;
-        }
-    });
-
-    updateOutput();
-    recordHistory();
-}
-
-         function recordHistory() {
+        function recordHistory() {
             const li = document.createElement('li');
             li.textContent = new Date().toLocaleString() + ' - ' + document.getElementById('output').textContent;
             historyList.appendChild(li);
@@ -433,19 +440,19 @@
             downloadJSON(data);
         }
 
-       function loadData(data) {
-    gridContainer.innerHTML = ''; // 清空現有項目
-    data.items.forEach((item, index) => {
-        addGridItem(); // 添加新項目
-        const gridItem = gridContainer.children[index];
-        gridItem.querySelector('input').value = item.name;
-        gridItem.querySelector('select').value = item.status;
-        updateItemStatus(gridItem.querySelector('select'));
-    });
-    historyList.innerHTML = data.history.map(h => `<li>${h}</li>`).join('');
-    updateItemNumbers(); // 更新項目編號
-    updateOutput();
-}
+        function loadData(data) {
+            gridContainer.innerHTML = ''; // 清空現有項目
+            data.items.forEach((item, index) => {
+                addGridItem(); // 添加新項目
+                const gridItem = gridContainer.children[index];
+                gridItem.querySelector('input').value = item.name;
+                gridItem.querySelector('select').value = item.status;
+                updateItemStatus(gridItem.querySelector('select'));
+            });
+            historyList.innerHTML = data.history.map(h => `<li>${h}</li>`).join('');
+            updateItemNumbers(); // 更新項目編號
+            updateOutput();
+        }
 
         function loadFile(event) {
             const file = event.target.files[0];
